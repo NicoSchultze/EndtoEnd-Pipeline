@@ -48,9 +48,16 @@ def format_data(res):
 
 # Function to stream formatted data
 def stream_data():
+    from kafka import KafkaProducer
+    import time
     res = get_data()
     res = format_data(res)
-    print(json.dumps(res, indent=3))
+    # print(json.dumps(res, indent=3))
+
+    producer = KafkaProducer(bootstrap_servers='localhost:9092', max_block_ms=5000)
+
+    # push data from the api to the queue (its called topic?)
+    producer.send('users_created', json.dumps(res).encode('utf-8'))
 
 
 stream_data()
