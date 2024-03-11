@@ -75,7 +75,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-
   control-center:
     image: confluentinc/cp-enterprise-control-center:7.4.0
     hostname: control-center
@@ -101,8 +100,7 @@ services:
 
   webserver:
     image: apache/airflow:2.6.0-python3.9
-    command: webserver
-    entrypoint: [ '/opt/airflow/script/entrypoint.sh' ]
+    command: bash -c "mkdir -p /opt/airflow && /opt/airflow/script/entrypoint.sh webserver"
     depends_on:
       - postgres
     environment:
@@ -133,6 +131,7 @@ services:
     depends_on:
       webserver:
         condition: service_healthy
+    command: bash -c "mkdir -p /opt/airflow && pip install -r /opt/airflow/requirements.txt && airflow db upgrade && airflow scheduler"
     volumes:
       - ./dags:/opt/airflow/dags
       - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
@@ -142,9 +141,9 @@ services:
       - EXECUTOR=Sequential
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       - AIRFLOW_WEBSERVER_SECRET_KEY=this_is_a_very_secured_key
-    command: bash -c "pip install -r ./requirements.txt && airflow db upgrade && airflow scheduler"
     networks:
       - confluent
+
 
   postgres:
     image: postgres:14.0
@@ -161,4 +160,3 @@ services:
 
 networks:
   confluent:
-
